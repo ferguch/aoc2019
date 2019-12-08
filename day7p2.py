@@ -20,14 +20,16 @@ def parse_opcode(opcode: int) -> Tuple[int, List[int]]:
 
 assert parse_opcode(1002) == (2, [0, 1, 0])
 
-def calc(list : List[int], input: List[int]) -> List[int]:
+def calc(list : List[int], input: List[int], pos: int) -> List[int]:
     list = list[:]
     output = []
-    pos = 0
+    #pos = 0
 
-    while list[pos] != 99: # stop
+    while True:
         opcode, modes = parse_opcode(list[pos])
         print(pos, input, opcode, modes)
+        if opcode == 99:  # stop
+            return None
         if opcode == ADD:
             value1 = list[list[pos + 1]] if modes[0] == 0 else list[pos + 1]
             value2 = list[list[pos + 2]] if modes[1] == 0 else list[pos + 2]
@@ -47,6 +49,10 @@ def calc(list : List[int], input: List[int]) -> List[int]:
             value = list[list[pos + 1]] if modes[0] == 0 else list[pos + 1]
             output.append(value)
             pos += 2
+            return output, pos
+            #value = self.get_value(self.pos + 1, modes[0])
+            #self.pos += 2
+            #return value
         elif opcode == JUMP_IF_TRUE:
             value1 = list[list[pos + 1]] if modes[0] == 0 else list[pos + 1]
             value2 = list[list[pos + 2]] if modes[1] == 0 else list[pos + 2]
@@ -79,29 +85,26 @@ def calc(list : List[int], input: List[int]) -> List[int]:
             pos += 4
         else:
             raise ValueError(f"Error: {list[pos]}")
-    return output
 
-def run_amp(program: List[int], input_signal: int, phase: int) -> List[int]:
+def run_amp(program: List[int], input_signal: int, phase: int, pos: int) -> List[int]:
     inputs = [phase, input_signal]
-    outputs = calc(program, inputs)
+    outputs = calc(program, inputs, pos)
     return outputs
 
 def run_program(program: List[int], phases: List[int]) -> int:
     output = 0
+    phase_pos = {}
     for phase in phases:
-        print("PHASE " + str(phase))
-        temp = run_amp(program, output, phase)
-        output = temp.pop()
+        phase_pos[phase] = 0
+
+    while output is not None:
+        for phase in phases:
+            print("PHASE " + str(phase))
+            temp, latest_pos = run_amp(program, output, phase, phase_pos[phase])
+            output = temp.pop()
+            phase_pos[phase] = latest_pos
 
     return output
-
-PROGRAM = [3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0]
-PHASES = [4,3,2,1,0]
-OUTPUT_SIGNAL = 43210
-
-assert run_program(PROGRAM, PHASES) == OUTPUT_SIGNAL
-assert run_program([3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0], [0,1,2,3,4]) == 54321
-assert run_program([3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0], [1,0,4,3,2]) == 65210
 
 def best_program(program: List[int]) -> int:
     max = 0
@@ -111,11 +114,13 @@ def best_program(program: List[int]) -> int:
         max = output if output > max else max
     return max
 
-assert best_program([3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0]) == 54321
-assert best_program([3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0]) == 65210
-
-# part 1
+# part 2
 with open("day7_input", "r") as f:
     lines = [int(x) for x in f.readline().split(",")]
-print(best_program(lines))
 
+
+PROGRAM2 = [3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5]
+PHASES2 = [9,8,7,6,5]
+OUTPUT_SIGNAL2 = 139629729
+
+print(run_program(PROGRAM2, PHASES2))
