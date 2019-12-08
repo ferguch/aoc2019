@@ -1,6 +1,7 @@
 from typing import List
 from collections import Counter
 import copy
+import sys
 
 Layer = List[List[int]]
 Image = List[Layer]
@@ -37,13 +38,14 @@ def count_colours(image: Image) -> List[Counter]:
     return layers_counter
 
 def multiply_counts(image: Image, fewest_value: int) -> int:
-    fewest_count = 99999999999999
+    fewest_count = sys.maxsize
     colour_counts = count_colours(image)
-    for colour_count in colour_counts:
-        current_fewest_count = colour_count.get(fewest_value, 0)
-        if current_fewest_count is None or current_fewest_count < fewest_count:
-            fewest_count = current_fewest_count
-            fewest_count_layer = colour_count
+    fewest_count_layer = min(colour_counts, key=lambda colour_count: colour_count[0])
+    # for colour_count in colour_counts:
+    #     current_fewest_count = colour_count.get(fewest_value, 0)
+    #     if current_fewest_count < fewest_count:
+    #         fewest_count = current_fewest_count
+    #         fewest_count_layer = colour_count
     return fewest_count_layer.get(1) * fewest_count_layer.get(2)
 
 # part 1
